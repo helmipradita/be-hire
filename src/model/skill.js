@@ -17,16 +17,26 @@ const insertSkill = (data) => {
   );
 };
 
-const getSkill = () => {
+const getSkill = ({ limit, offset, sortBy, sortOrder, search }) => {
   return new Promise((resolve, reject) =>
-    Pool.query(`SELECT DISTINCT name FROM tbl_skill`, (err, result) => {
-      if (!err) {
-        resolve(result);
-      } else {
-        reject(err);
+    Pool.query(
+      `SELECT DISTINCT ON (name) name, id 
+      FROM tbl_skill
+      WHERE name
+      ILIKE '%${search}%' ORDER BY ${sortBy} ${sortOrder} LIMIT ${limit} OFFSET ${offset}`,
+      (err, result) => {
+        if (!err) {
+          resolve(result);
+        } else {
+          reject(err);
+        }
       }
-    })
+    )
   );
+};
+
+const countAll = () => {
+  return Pool.query('SELECT COUNT(*) AS total FROM tbl_skill');
 };
 
 const findSkillByUserId = (user_id) => {
@@ -87,6 +97,7 @@ const deleteSkill = (id) => {
 module.exports = {
   insertSkill,
   getSkill,
+  countAll,
   findSkillByUserId,
   updateSkill,
   findSkill,
