@@ -1,26 +1,25 @@
 const { response } = require(`../middleware/common`);
 const {
-  registerUser,
   findEmail,
   insertEmployee,
   insertCompany,
-  updateCompany,
-  updateEmployee,
-  findEmployee,
-  findCompany,
-  findUsers,
-  profileCompany,
-  profileEmploye,
+  registerUser,
   verif,
+  findUser,
+  profileEmploye,
+  profileCompany,
+  updateEmployee,
+  updateCompany,
   allEmployee,
+  countAllEmployee,
+  getEmployeeById,
+  getSkillById,
+  getPortoById,
+  getExpById,
 } = require(`../model/user`);
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const {
-  generateToken,
-  generateRefreshToken,
-  decodeToken,
-} = require(`../helpers/auth`);
+const { generateToken, generateRefreshToken } = require(`../helpers/auth`);
 const email = require('../middleware/email');
 const cloudinary = require('../config/photo');
 
@@ -30,11 +29,11 @@ const Host = process.env.HOST;
 const UserController = {
   register: async (req, res, next) => {
     let {
-      rows: [users],
+      rows: [user],
     } = await findEmail(req.body.email);
 
-    if (users) {
-      return response(res, 404, false, 'email already use', ' register fail');
+    if (user) {
+      return response(res, 404, false, 'email already use, register fail');
     }
 
     // create otp
@@ -61,22 +60,22 @@ const UserController = {
       position: req.body.position,
     };
     try {
-      if (role === 'company') {
-        await insertCompany(profile);
-      } else if (role === 'employee') {
+      if (role === 'employee') {
         await insertEmployee(profile);
+      } else if (role === 'company') {
+        await insertCompany(profile);
       } else {
         return response(
           res,
           404,
           false,
           null,
-          'Wrong Role Input, Check it again'
+          'wrong role input, check it again'
         );
       }
       const result = await registerUser(data);
       if (result) {
-        let verifUrl = `http://${Host}:${Port}/users/${req.body.email}/${otp}`;
+        let verifUrl = `http://${Host}:${Port}/user/${req.body.email}/${otp}`;
         let text = `Hello ${req.body.name} \n Thank you for join us arutala hireapp. Please confirm your email by clicking on the following link ${verifUrl}`;
         const subject = `${otp} is your otp`;
         let sendEmail = email(req.body.email, subject, text);
@@ -92,21 +91,21 @@ const UserController = {
           'register success please check your email'
         );
       }
-    } catch (err) {
-      console.log(err);
-      response(res, 404, false, err, ' register fail');
+    } catch (error) {
+      console.log(error);
+      response(res, 404, false, error, ' register fail');
     }
   },
   verif: async (req, res) => {
     const { email, otp } = req.body;
     const {
-      rows: [users],
+      rows: [user],
     } = await findEmail(email);
-    if (!users) {
+    if (!user) {
       return response(res, 404, false, null, 'email not found');
     }
 
-    if (users.otp == otp) {
+    if (user.otp == otp) {
       await verif(email);
       return response(
         res,
@@ -120,54 +119,78 @@ const UserController = {
   },
   login: async (req, res) => {
     let {
-      rows: [users],
+      rows: [user],
     } = await findEmail(req.body.email);
 
-    if (!users) {
+    if (!user) {
       return response(res, 404, false, null, ' email not found');
     }
 
     const password = req.body.password;
-    const validation = bcrypt.compareSync(password, users.password);
+    const validation = bcrypt.compareSync(password, user.password);
     if (!validation) {
       return response(res, 404, false, null, 'wrong password');
     }
 
-    if (users.verif == 0) {
+    if (user.verif == 0) {
       return response(res, 404, false, null, 'account not verified');
     }
 
-    delete users.password;
-    delete users.verif;
-    delete users.otp;
+    delete user.password;
+    delete user.verif;
+    delete user.otp;
     let payload = {
-      id: users.id,
-      fullname: users.fullname,
-      email: users.email,
-      role: users.role,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
     };
     let accessToken = generateToken(payload);
     let refToken = generateRefreshToken(payload);
 
-    users.token = accessToken;
-    users.refreshToken = refToken;
-    response(res, 200, true, users, 'login success');
+    user.token = accessToken;
+    user.refreshToken = refToken;
+    response(res, 200, true, user, 'login success');
   },
-  updateEmployee: async (req, res, next) => {
+  profile: async (req, res, next) => {
     try {
-      const { job, province, city, workplace, description } = req.body;
+      const { id } = req.payload;
+
+      let {
+        rows: [user],
+      } = await findUser(id);
+
+      if (user.role === 'employee') {
+        const result = await profileEmploye(id);
+        response(res, 200, true, result.rows, 'get employee profile success');
+      } else if (user.role === 'company') {
+        const result = await profileCompany(id);
+        response(res, 200, true, result.rows, 'get company profile success');
+      } else {
+        response(res, 404, false, null, 'user not found');
+      }
+    } catch (error) {
+      console.log(error);
+      response(res, 404, error, 'get profile failed');
+    }
+  },
+  update: async (req, res, next) => {
+    try {
       const { id } = req.payload;
 
       const image = await cloudinary.uploader.upload(req.file.path, {
         folder: 'arutala',
       });
-      const {
-        rows: [employee],
-      } = await findEmployee(id);
 
-      if (!employee) {
-        response(res, 404, false, null, 'Employee not found');
-      } else {
+      const {
+        rows: [user],
+      } = await findUser(id);
+
+      if (!user) {
+        response(res, 404, false, null, 'user not found');
+      } else if (req.payload.role === 'employee') {
+        const { job, province, city, workplace, description } = req.body;
+
         const dataProfile = {
           id,
           job,
@@ -179,38 +202,25 @@ const UserController = {
         };
 
         await updateEmployee(dataProfile);
-        response(res, 200, true, dataProfile, 'update data success');
-      }
-    } catch (error) {
-      console.log(error);
-      response(res, 404, false, 'update data failed');
-    }
-  },
-  updateCompany: async (req, res, next) => {
-    try {
-      const {
-        company_name,
-        position,
-        province,
-        city,
-        description,
-        company_email,
-        company_phone,
-        linkedin,
-      } = req.body;
-      const { id } = req.payload;
+        response(
+          res,
+          200,
+          true,
+          dataProfile,
+          'update profile employee success'
+        );
+      } else if (req.payload.role === 'company') {
+        const {
+          company_name,
+          position,
+          province,
+          city,
+          description,
+          company_email,
+          company_phone,
+          linkedin,
+        } = req.body;
 
-      const image = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'arutala',
-      });
-
-      const {
-        rows: [company],
-      } = await findCompany(id);
-
-      if (!company) {
-        response(res, 404, false, null, 'Company not found');
-      } else {
         const dataProfile = {
           id,
           company_name,
@@ -225,45 +235,17 @@ const UserController = {
         };
 
         await updateCompany(dataProfile);
-        response(res, 200, true, dataProfile, 'update data success');
+        response(res, 200, true, dataProfile, 'update company profile success');
       }
     } catch (error) {
       console.log(error);
-      response(res, 404, false, 'update data failed');
+      response(res, 404, false, 'update company profile failed');
     }
   },
-  profile: async (req, res, next) => {
-    try {
-      const { id } = req.payload;
-
-      let {
-        rows: [users],
-      } = await findUsers(id);
-
-      if (users.role === 'employee') {
-        const result = await profileEmploye(id);
-        response(res, 200, true, result.rows, 'GET EMPLOYEE PROFILE SUCCESS');
-        console.log('Employe');
-      } else if (users.role === 'company') {
-        const result = await profileCompany(id);
-        response(res, 200, true, result.rows, 'GET COMPANY PROFILE SUCCESS');
-      } else {
-        response(
-          res,
-          404,
-          false,
-          null,
-          'ROLE TIDAK DITEMUKAN,SILAHKAN HUBUNGI ADMIN'
-        );
-      }
-    } catch (error) {
-      response(res, 404, error, 'DATA TIDAK DITEMUKAN');
-    }
-  },
-  AllEmployee: async (req, res) => {
+  employeeAll: async (req, res) => {
     try {
       const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 5;
+      const limit = parseInt(req.query.limit) || 10;
       const sortBy = req.query.sortBy || 'name';
       const sortOrder = req.query.sortOrder || 'DESC';
       const search = req.query.search || '';
@@ -276,9 +258,66 @@ const UserController = {
         limit,
         offset,
       });
-      response(res, 200, true, result.rows, 'GET EMPLOYEE DATA SUCCESS');
+
+      const {
+        rows: [count],
+      } = await countAllEmployee();
+      const totalData = parseInt(count.total);
+      const totalPage = Math.ceil(totalData / limit);
+      const pagination = {
+        currentPage: page,
+        limit,
+        totalData,
+        totalPage,
+      };
+
+      response(
+        res,
+        200,
+        true,
+        { result: result.rows, pagination: pagination },
+        'get employee success'
+      );
     } catch (error) {
-      response(res, 404, error, 'DATA TIDAK DITEMUKAN');
+      console.log(error);
+      response(res, 404, error, 'get employee failed');
+    }
+  },
+  employeeById: async (req, res) => {
+    try {
+      const id = req.params.id;
+
+      const {
+        rows: [employee],
+      } = await getEmployeeById(id);
+
+      const resultSkill = await getSkillById(id);
+      const skill = resultSkill.rows;
+
+      const resultPorto = await getPortoById(id);
+      const portofolio = resultPorto.rows;
+
+      const resultExp = await getExpById(id);
+      const experience = resultExp.rows;
+
+      const employeeAll = {
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        job: employee.job,
+        province: employee.province,
+        city: employee.city,
+        workplace: employee.workplace,
+        description: employee.description,
+        photo: employee.photo,
+      };
+
+      const data = { ...employeeAll, skill, portofolio, experience };
+
+      response(res, 200, true, data, 'get employee by id success');
+    } catch (error) {
+      console.log(error);
+      response(res, 404, error, 'get employee by id failed');
     }
   },
 };

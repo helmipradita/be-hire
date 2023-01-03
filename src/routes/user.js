@@ -10,20 +10,7 @@ let uploaded = multer();
 router.post('/register/:role', uploaded.array(), UserController.register);
 router.post('/verification', uploaded.array(), UserController.verif);
 router.post('/login', uploaded.array(), UserController.login);
-router.put(
-  '/update-company',
-  upload.single('photo'),
-  protect,
-  UserController.updateCompany
-);
-router.put(
-  '/update-employee',
-  upload.single('photo'),
-  protect,
-  UserController.updateEmployee
-);
-
-// router.get('/profile', protect, UserController.profile);
-// router.get('/employee/all', protect, UserController.AllEmployee);
+router.get('/profile', protect, UserController.profile);
+router.put('/profile', upload.single('photo'), protect, UserController.update);
 
 module.exports = router;
