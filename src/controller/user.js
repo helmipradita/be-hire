@@ -87,8 +87,8 @@ const UserController = {
           res,
           200,
           true,
-          { email: data.email },
-          'register success please check your email'
+          { email: data.email, otp: otp },
+          'register success please check your email, gcp offline copas otpnya langsung untuk verif'
         );
       }
     } catch (error) {
