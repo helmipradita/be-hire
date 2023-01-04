@@ -3,7 +3,8 @@ const {
   insertHire,
   getHireEmployee,
   getHireCompany,
-  findHireById,
+  findHireByUserId,
+  findHireEmployee,
 } = require(`../model/hire`);
 const { v4: uuidv4 } = require('uuid');
 
@@ -39,21 +40,59 @@ const HireController = {
       response(res, 404, false, 'insert hire failed');
     }
   },
-  getListHire: async (req, res, next) => {
+  getAllHire: async (req, res, next) => {
+    try {
+      const { id, role } = req.payload;
+
+      if (role === 'employee') {
+        return response(
+          res,
+          404,
+          false,
+          null,
+          `role employee do not have access here`
+        );
+      }
+
+      const {
+        rows: [checHire],
+      } = await findHireByUserId(id);
+
+      if (!checHire) {
+        return response(
+          res,
+          404,
+          false,
+          null,
+          `user don't have hire, check again`
+        );
+      }
+
+      const result = await findHireEmployee(id);
+
+      response(res, 200, true, result.rows, 'get hire success');
+    } catch (error) {
+      console.log(error);
+      response(res, 404, false, 'get hire fail');
+    }
+  },
+  getByUserId: async (req, res, next) => {
     try {
       const user_id = req.payload.id;
       let result;
 
       if (req.payload.role === 'employee') {
-        console.log('employee');
-
-        result = await getHireEmployee({
-          user_id,
-        });
-      } else if (req.payload.role === 'company') {
-        console.log('company');
+        console.log('login akun employee');
 
         result = await getHireCompany({
+          user_id,
+        });
+
+        console.log(result.rows);
+      } else if (req.payload.role === 'company') {
+        console.log('login akun company');
+
+        result = await getHireEmployee({
           user_id,
         });
       }
@@ -67,32 +106,6 @@ const HireController = {
           `user don't have hire, check again`
         );
       }
-
-      response(res, 200, true, result.rows, 'get hire success');
-    } catch (error) {
-      console.log(error);
-      response(res, 404, false, 'get hire fail');
-    }
-  },
-  getById: async (req, res, next) => {
-    try {
-      const id = req.params.id;
-
-      const {
-        rows: [hire],
-      } = await findHireById(id);
-
-      if (!hire) {
-        return response(
-          res,
-          404,
-          false,
-          null,
-          `user don't have hire, check again`
-        );
-      }
-
-      const result = await findHireById(id);
 
       response(res, 200, true, result.rows, 'get hire success');
     } catch (error) {

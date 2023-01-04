@@ -13,8 +13,8 @@ router.post(
   protect,
   HireController.addByEmployeeId
 );
-router.get('/', protect, HireController.getListHire);
-router.get('/:id', protect, HireController.getById);
+router.get('/all', protect, HireController.getAllHire);
+router.get('/', protect, HireController.getByUserId);
 
 //public
 
