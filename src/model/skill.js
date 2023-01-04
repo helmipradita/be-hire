@@ -35,14 +35,35 @@ const getSkill = ({ limit, offset, sortBy, sortOrder, search }) => {
   );
 };
 
-const countAll = () => {
-  return Pool.query('SELECT COUNT(*) AS total FROM tbl_skill');
+const countAll = (user_id) => {
+  return Pool.query(
+    `SELECT COUNT(*) AS total FROM tbl_skill WHERE user_id='${user_id}'`
+  );
 };
 
 const findSkillByUserId = (user_id) => {
   return new Promise((resolve, reject) =>
     Pool.query(
-      `SELECT id, user_id, name FROM tbl_skill WHERE user_id='${user_id}'`,
+      `SELECT * 
+      FROM tbl_skill
+      WHERE user_id='${user_id}'`,
+      (err, result) => {
+        if (!err) {
+          resolve(result);
+        } else {
+          reject(err);
+        }
+      }
+    )
+  );
+};
+
+const findSkillById = (id) => {
+  return new Promise((resolve, reject) =>
+    Pool.query(
+      `SELECT * 
+      FROM tbl_skill
+      WHERE id='${id}'`,
       (err, result) => {
         if (!err) {
           resolve(result);
@@ -99,6 +120,7 @@ module.exports = {
   getSkill,
   countAll,
   findSkillByUserId,
+  findSkillById,
   updateSkill,
   findSkill,
   deleteSkill,

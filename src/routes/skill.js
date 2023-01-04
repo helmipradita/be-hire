@@ -8,7 +8,7 @@ let upload = multer();
 //primary
 router.post('/add', upload.array(), protect, SkillController.addByUserId);
 router.get('/', protect, SkillController.getByUser);
-router.get('/:id', protect, SkillController.getByUserId);
+router.get('/:id', protect, SkillController.getById);
 router.put('/:id', upload.array(), protect, SkillController.editByUserId);
 router.delete('/:id', upload.array(), protect, SkillController.deleteByUserId);
 

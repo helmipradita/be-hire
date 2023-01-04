@@ -4,6 +4,7 @@ const {
   getSkill,
   countAll,
   findSkillByUserId,
+  findSkillById,
   updateSkill,
   findSkill,
   deleteSkill,
@@ -96,21 +97,19 @@ const SkillController = {
         );
       }
 
-      // const result = await findSkillByUserId(user_id);
-
       response(res, 200, true, result.rows, 'get skill success');
     } catch (error) {
       console.log(error);
       response(res, 404, false, 'get skill fail');
     }
   },
-  getByUserId: async (req, res, next) => {
+  getById: async (req, res, next) => {
     try {
-      const user_id = req.params.id;
+      const id = req.params.id;
 
       const {
         rows: [skill],
-      } = await findSkillByUserId(user_id);
+      } = await findSkillById(id);
 
       if (!skill) {
         return response(
@@ -122,7 +121,7 @@ const SkillController = {
         );
       }
 
-      const result = await findSkillByUserId(user_id);
+      const result = await findSkillById(id);
 
       response(res, 200, true, result.rows, 'get skill success');
     } catch (error) {
