@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const UserRouter = require('../routes/user');
 const SkillRouter = require('../routes/skill');
+const ExperienceRouter = require('../routes/experience');
 
 const { UserController } = require(`../controller/user`);
 const { protect } = require('../middleware/auth');
 
 router.use('/auth', UserRouter);
 router.use('/skill', SkillRouter);
+router.use('/experience', ExperienceRouter);
 
 //employee
 router.get('/employee', UserController.employeeAll);
