@@ -6,6 +6,8 @@ const {
   registerUser,
   verif,
   findUser,
+  findCompany,
+  findEmployee,
   profileEmploye,
   profileCompany,
   updateEmployee,
@@ -45,6 +47,9 @@ const UserController = {
     const id = uuidv4();
     const role = req.params.role;
     let password = bcrypt.hashSync(req.body.password);
+    // let password1 = req.body.password;
+    // let confirm = req.body.confirm;
+
     let data = {
       id,
       name: req.body.name,
@@ -59,6 +64,11 @@ const UserController = {
       company_name: req.body.company_name,
       position: req.body.position,
     };
+
+    // if (password1 !== confirm) {
+    //   return response(res, 404, false, null, 'password not match, check again');
+    // }
+
     try {
       if (role === 'employee') {
         await insertEmployee(profile);
@@ -174,72 +184,92 @@ const UserController = {
       response(res, 404, error, 'get profile failed');
     }
   },
-  update: async (req, res, next) => {
+  updateCompany: async (req, res, next) => {
     try {
+      const {
+        company_name,
+        position,
+        province,
+        city,
+        description,
+        company_email,
+        company_phone,
+        linkedin,
+      } = req.body;
       const { id } = req.payload;
+      const photo = req.file?.path || null;
+      let image;
 
-      const image = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'arutala',
-      });
+      if (photo) {
+        image = await cloudinary.uploader.upload(photo, {
+          folder: 'arutala',
+        });
+      }
 
       const {
-        rows: [user],
-      } = await findUser(id);
+        rows: [company],
+      } = await findCompany(id);
 
-      if (!user) {
-        response(res, 404, false, null, 'user not found');
-      } else if (req.payload.role === 'employee') {
-        const { job, province, city, workplace, description } = req.body;
-
+      if (!company) {
+        response(res, 404, false, null, 'company not found');
+      } else {
         const dataProfile = {
           id,
-          job,
-          province,
-          city,
-          workplace,
-          description,
-          photo: image.url,
-        };
-
-        await updateEmployee(dataProfile);
-        response(
-          res,
-          200,
-          true,
-          dataProfile,
-          'update profile employee success'
-        );
-      } else if (req.payload.role === 'company') {
-        const {
-          company_name,
-          position,
-          province,
-          city,
-          description,
-          company_email,
-          company_phone,
-          linkedin,
-        } = req.body;
-
-        const dataProfile = {
-          id,
-          company_name,
-          position,
-          province,
-          city,
-          description,
-          company_email,
-          company_phone,
-          linkedin,
-          photo: image.url,
+          company_name: company_name || null,
+          position: position || null,
+          province: province || null,
+          city: city || null,
+          description: description || null,
+          company_email: company_email || null,
+          company_phone: company_phone || null,
+          linkedin: linkedin || null,
+          photo: image?.url,
         };
 
         await updateCompany(dataProfile);
-        response(res, 200, true, dataProfile, 'update company profile success');
+        response(res, 200, true, dataProfile, 'update data success');
       }
     } catch (error) {
       console.log(error);
-      response(res, 404, false, 'update company profile failed');
+      response(res, 404, false, 'update data failed');
+    }
+  },
+  updateEmployee: async (req, res, next) => {
+    try {
+      const { job, province, city, workplace, description } = req.body;
+      const { id } = req.payload;
+      const photo = req.file?.path || null;
+      let image;
+
+      if (photo) {
+        image = await cloudinary.uploader.upload(photo, {
+          folder: 'arutala',
+        });
+      }
+
+      const {
+        rows: [employee],
+      } = await findEmployee(id);
+
+      if (!employee) {
+        response(res, 404, false, null, 'employee not found');
+      } else {
+        const dataProfile = {
+          id,
+          job: job || null,
+          province: province || null,
+          city: city || null,
+          workplace: workplace || null,
+          description: description || null,
+          photo: image?.url,
+        };
+
+        await updateEmployee(dataProfile);
+        response(res, 200, true, dataProfile, 'update data success');
+      }
+    } catch (error) {
+      console.log(error);
+      response(res, 404, false, 'update data failed');
     }
   },
   employeeAll: async (req, res) => {

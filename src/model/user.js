@@ -93,6 +93,36 @@ const findUser = (id) => {
   );
 };
 
+const findCompany = (id) => {
+  return new Promise((resolve, reject) =>
+    Pool.query(
+      `SELECT * FROM tbl_company where user_id='${id}'`,
+      (err, result) => {
+        if (!err) {
+          resolve(result);
+        } else {
+          reject(err);
+        }
+      }
+    )
+  );
+};
+
+const findEmployee = (id) => {
+  return new Promise((resolve, reject) =>
+    Pool.query(
+      `SELECT * FROM tbl_employee where user_id='${id}'`,
+      (err, result) => {
+        if (!err) {
+          resolve(result);
+        } else {
+          reject(err);
+        }
+      }
+    )
+  );
+};
+
 const profileEmploye = (id) => {
   return new Promise((resolve, reject) =>
     Pool.query(
@@ -306,6 +336,8 @@ module.exports = {
   registerUser,
   verif,
   findUser,
+  findCompany,
+  findEmployee,
   profileEmploye,
   profileCompany,
   updateEmployee,
