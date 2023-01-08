@@ -45,7 +45,9 @@ const findExpByUser = ({
 }) => {
   return new Promise((resolve, reject) =>
     Pool.query(
-      `SELECT * 
+      `SELECT id, user_id, position, company_name, 
+        to_char( work_start, 'DD Month YYYY' ) AS work_start, to_char( work_ended, 'DD Month YYYY' ) AS work_ended, 
+        description, created_at
       FROM tbl_experience
       WHERE user_id='${user_id}' AND position
       ILIKE '%${search}%' ORDER BY ${sortBy} ${sortOrder} 
@@ -64,7 +66,9 @@ const findExpByUser = ({
 const findExpById = (id) => {
   return new Promise((resolve, reject) =>
     Pool.query(
-      `SELECT * 
+      `SELECT id, user_id, position, company_name, 
+      to_char( work_start, 'DD Month YYYY' ) AS work_start, to_char( work_ended, 'DD Month YYYY' ) AS work_ended, 
+      description, created_at 
       FROM tbl_experience
       WHERE id='${id}' `,
       (err, result) => {
@@ -110,7 +114,10 @@ const updateExp = (data) => {
 const findExp = (id) => {
   return new Promise((resolve, reject) =>
     Pool.query(
-      `SELECT * FROM tbl_experience WHERE id='${id}'`,
+      `SELECT id, user_id, position, company_name, 
+        to_char( work_start, 'DD Month YYYY' ) AS work_start, to_char( work_ended, 'DD Month YYYY' ) AS work_ended, 
+        description, created_at
+       FROM tbl_experience WHERE id='${id}'`,
       (err, result) => {
         if (!err) {
           resolve(result);
