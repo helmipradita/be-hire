@@ -63,7 +63,7 @@ const findSkillById = (id) => {
     Pool.query(
       `SELECT * 
       FROM tbl_skill
-      WHERE id='${id}'`,
+      WHERE user_id='${id}'`,
       (err, result) => {
         if (!err) {
           resolve(result);
