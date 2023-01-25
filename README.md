@@ -17,9 +17,6 @@
 
 
 
-
-# Telegram App - Backend
-
 ## Table of Contents
 
 * [About the Project](#about-the-project)
