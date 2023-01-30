@@ -1417,7 +1417,7 @@ Contributors names and contact info
 * Frontend Developers
   * Pramudia Syahrul Fanani [@Fanani23](https://github.com/Fanani23)
   * Lidiya Wati [@Lidiya135](https://github.com/Lidiya135)
-  * Irfan 
+  * Irfan [@IrfanJulian](https://github.com/IrfanJulian)
 * Backend Developers
   * Alvin Jamal Azkya [@alvinjamal](https://github.com/alvinjamal)
   * Sri Yuniar [@sriyuniar541](https://github.com/sriyuniar541)
